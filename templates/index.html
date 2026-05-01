@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restaurant Intelligence System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="grain"></div>
+
+<header>
+  <div class="logo">
+    <span class="logo-icon">◈</span>
+    <span class="logo-text">MISE EN PLACE<em>intelligence</em></span>
+  </div>
+  <nav>
+    <button class="nav-btn active" data-tab="forecast">Forecast</button>
+    <button class="nav-btn" data-tab="staff">Staff</button>
+    <button class="nav-btn" data-tab="ingredients">Ingredients</button>
+    <button class="nav-btn" data-tab="feedback">Feedback</button>
+    <button class="nav-btn" data-tab="model">Model Health</button>
+  </nav>
+  <div class="header-meta">
+    <span id="model-badge" class="badge loading">Loading model…</span>
+  </div>
+</header>
+
+<main>
+  <!-- ── FORECAST TAB ── -->
+  <section class="tab active" id="tab-forecast">
+    <div class="tab-header">
+      <h1>Cover Forecast</h1>
+      <p class="subtitle">Predict covers by hour for any upcoming day</p>
+    </div>
+
+    <div class="controls-row">
+      <div class="control-group">
+        <label>Date</label>
+        <input type="date" id="fc-date" />
+      </div>
+      <div class="control-group">
+        <label>Weather</label>
+        <select id="fc-weather">
+          <option value="sunny">☀ Sunny</option>
+          <option value="cloudy">⛅ Cloudy</option>
+          <option value="rainy">🌧 Rainy</option>
+          <option value="stormy">⛈ Stormy</option>
+        </select>
+      </div>
+      <div class="control-group checkbox-group">
+        <label><input type="checkbox" id="fc-holiday"> Public Holiday</label>
+        <label><input type="checkbox" id="fc-event"> Special Event</label>
+      </div>
+      <button class="btn-primary" id="btn-forecast">Run Forecast</button>
+    </div>
+
+    <div class="result-cards" id="fc-summary" style="display:none">
+      <div class="card stat">
+        <div class="stat-label">Expected Covers</div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-range" id="stat-range">—</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Peak Hour</div>
+        <div class="stat-value" id="stat-peak">—</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Confidence</div>
+        <div class="stat-value" id="stat-conf">—</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Model Corrections</div>
+        <div class="stat-value" id="stat-corrections">—</div>
+      </div>
+    </div>
+
+    <div class="chart-wrap card" id="fc-chart-wrap" style="display:none">
+      <canvas id="chart-covers"></canvas>
+    </div>
+
+    <div class="table-wrap card" id="fc-table-wrap" style="display:none">
+      <h3>Hourly Breakdown</h3>
+      <table id="fc-table">
+        <thead>
+          <tr>
+            <th>Hour</th>
+            <th>Predicted</th>
+            <th>Range</th>
+            <th>Confidence</th>
+            <th>Weather Impact</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── STAFF TAB ── -->
+  <section class="tab" id="tab-staff">
+    <div class="tab-header">
+      <h1>Staff Schedule</h1>
+      <p class="subtitle">Role-by-role staffing requirements derived from cover predictions</p>
+    </div>
+
+    <div class="controls-row">
+      <div class="control-group">
+        <label>Date</label>
+        <input type="date" id="sf-date" />
+      </div>
+      <div class="control-group">
+        <label>Weather</label>
+        <select id="sf-weather">
+          <option value="sunny">☀ Sunny</option>
+          <option value="cloudy">⛅ Cloudy</option>
+          <option value="rainy">🌧 Rainy</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="btn-staff">Generate Schedule</button>
+    </div>
+
+    <div class="result-cards" id="sf-summary" style="display:none">
+      <div class="card stat">
+        <div class="stat-label">Total Labour Cost</div>
+        <div class="stat-value" id="sf-cost">—</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Total Staff Hours</div>
+        <div class="stat-value" id="sf-hours">—</div>
+      </div>
+    </div>
+
+    <div class="table-wrap card" id="sf-table-wrap" style="display:none">
+      <h3>Role Summary</h3>
+      <table id="sf-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Station</th>
+            <th>Peak Count</th>
+            <th>Total Hours</th>
+            <th>Rate / hr</th>
+            <th>Shift Cost</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── INGREDIENTS TAB ── -->
+  <section class="tab" id="tab-ingredients">
+    <div class="tab-header">
+      <h1>Ingredient Orders</h1>
+      <p class="subtitle">Smart ordering accounting for shelf life and supplier lead times</p>
+    </div>
+
+    <div class="controls-row">
+      <div class="control-group">
+        <label>Order Date</label>
+        <input type="date" id="ing-date" />
+      </div>
+      <div class="control-group">
+        <label>Planning Window</label>
+        <select id="ing-days">
+          <option value="3">3 Days</option>
+          <option value="5" selected>5 Days</option>
+          <option value="7">7 Days</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="btn-ingredients">Calculate Orders</button>
+    </div>
+
+    <div class="result-cards" id="ing-summary" style="display:none">
+      <div class="card stat">
+        <div class="stat-label">Total Food Cost</div>
+        <div class="stat-value" id="ing-total">—</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Critical Items</div>
+        <div class="stat-value" id="ing-critical">—</div>
+      </div>
+    </div>
+
+    <div class="ing-categories card" id="ing-cats" style="display:none"></div>
+
+    <div class="table-wrap card" id="ing-table-wrap" style="display:none">
+      <h3>Order List</h3>
+      <table id="ing-table">
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th>Order Qty</th>
+            <th>Unit</th>
+            <th>Shelf Life</th>
+            <th>Lead Time</th>
+            <th>Est. Cost</th>
+            <th>Urgency</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── FEEDBACK TAB ── -->
+  <section class="tab" id="tab-feedback">
+    <div class="tab-header">
+      <h1>Manager Corrections</h1>
+      <p class="subtitle">Tell the model what actually happened — it will learn and adapt</p>
+    </div>
+
+    <div class="feedback-form card">
+      <h3>Submit Correction</h3>
+      <div class="form-grid">
+        <div class="control-group">
+          <label>Date of Service</label>
+          <input type="date" id="fb-date" />
+        </div>
+        <div class="control-group">
+          <label>Predicted Covers</label>
+          <input type="number" id="fb-predicted" placeholder="e.g. 120" min="0" />
+        </div>
+        <div class="control-group">
+          <label>Actual Covers</label>
+          <input type="number" id="fb-actual" placeholder="e.g. 85" min="0" />
+        </div>
+        <div class="control-group">
+          <label>Weather (actual)</label>
+          <select id="fb-weather">
+            <option value="sunny">☀ Sunny</option>
+            <option value="cloudy">⛅ Cloudy</option>
+            <option value="rainy">🌧 Rainy</option>
+          </select>
+        </div>
+        <div class="control-group full-width">
+          <label>Notes (reason for discrepancy)</label>
+          <input type="text" id="fb-note" placeholder="e.g. Unexpected rain, local event cancelled…" />
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-feedback">Submit &amp; Update Model</button>
+      <div id="fb-result" class="feedback-result" style="display:none"></div>
+    </div>
+
+    <div class="card" id="fb-history-wrap">
+      <h3>Correction History <span id="fb-count" class="badge">0 events</span></h3>
+      <table id="fb-history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Predicted</th>
+            <th>Actual</th>
+            <th>Residual</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── MODEL HEALTH TAB ── -->
+  <section class="tab" id="tab-model">
+    <div class="tab-header">
+      <h1>Model Health</h1>
+      <p class="subtitle">Track prediction accuracy and correction convergence over time</p>
+    </div>
+
+    <div class="result-cards" id="model-cards">
+      <div class="card stat">
+        <div class="stat-label">Cross-Val MAE</div>
+        <div class="stat-value" id="m-cvmae">—</div>
+        <div class="stat-range">covers avg error on held-out data</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Feedback Events</div>
+        <div class="stat-value" id="m-fb-count">—</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Correction MAE</div>
+        <div class="stat-value" id="m-fb-mae">—</div>
+        <div class="stat-range">after manager corrections</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Recent Bias</div>
+        <div class="stat-value" id="m-bias">—</div>
+        <div class="stat-range">avg error last 5 events</div>
+      </div>
+    </div>
+
+    <div class="card" id="model-features-wrap">
+      <h3>Feature Importance</h3>
+      <div id="feature-bars"></div>
+    </div>
+  </section>
+</main>
+
+<div id="spinner" class="spinner-overlay" style="display:none">
+  <div class="spinner"></div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

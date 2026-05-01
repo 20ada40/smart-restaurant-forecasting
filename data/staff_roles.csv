@@ -1,0 +1,14 @@
+role,station,hourly_rate,covers_per_staff_hour,min_staff,max_staff,notes
+head_chef,kitchen,28.00,20,1,1,Always required when open
+sous_chef,kitchen,22.00,25,0,2,Required above 60 covers/hr
+line_cook,kitchen,16.00,18,1,4,
+prep_cook,kitchen,13.50,30,1,2,Morning/afternoon only
+pastry_chef,kitchen,18.00,40,0,1,Optional based on dessert volume
+server,floor,14.00,15,2,8,
+head_waiter,floor,17.00,25,1,2,
+host,front,14.50,50,1,2,
+bartender,bar,16.50,20,0,3,
+bar_back,bar,13.00,40,0,2,
+busser,floor,13.00,22,1,4,
+dishwasher,kitchen,13.00,35,1,3,
+manager,management,32.00,999,1,2,Always required
